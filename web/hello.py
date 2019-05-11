@@ -14,17 +14,19 @@ def run_detect(image_dir):
     print("Change dir: " + os.getcwd())
     sys.path.append(os.getcwd())
     
-    import darknet as dn
-    dn.set_gpu(0)
-    net = dn.load_net("cfg/yolov3.cfg".encode('utf8'), "weights/yolov3.weights".encode('utf8'), 0)
-    meta = dn.load_meta("cfg/coco.data".encode('utf8'))
-    r = dn.detect(net, meta, image_dir.encode('utf8'))
+    # import darknet as dn
+    # dn.set_gpu(0)
+    # net = dn.load_net("cfg/yolov3.cfg".encode('utf8'), "weights/yolov3.weights".encode('utf8'), 0)
+    # meta = dn.load_meta("cfg/coco.data".encode('utf8'))
+    # r = dn.detect(net, meta, image_dir.encode('utf8'))
+    # print(r)
 
+    os.system("./darknet detect cfg/yolov3.cfg ./weights/yolov3.weights " + image_dir) 
     # Move the result to /static
-    os.system("mv ./predictions.jpg " + APP_ROOT.join('/static'))
+    os.system("mv ./predictions.jpg " + APP_ROOT + '/static')
     os.chdir(APP_ROOT)
     print("Back to: ", os.getcwd())
-    return r
+    return
 
 @app.route('/')
 def index():
@@ -47,4 +49,5 @@ def upload():
     return render_template("complete.html")
 
 if __name__ == "__main__":
+    # run_detect(os.path.join(APP_ROOT, 'images/') + 'dog.jpg')
     app.run(debug = True)

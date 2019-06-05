@@ -44,7 +44,7 @@ class MainArea:
     def create_canvas(self, _frame):
         self.cv = Canvas(_frame, width=640, height=480, bg='white')
         self.cv.bind('<1>', self.activate_paint)
-        self.cv.pack(expand=YES, fill=BOTH)
+        self.cv.pack(expand=True, fill=BOTH)
 
     def create_draw(self):
         self.image1 = PIL.Image.new('RGB', (640, 480), 'white')
@@ -57,9 +57,9 @@ class MainArea:
 
     def create_frame(self):
         self.top_frame = Frame(self.root)
-        self.top_frame.pack()
+        self.top_frame.pack(expand=True)
         self.drawing_frame = Frame(self.root)
-        self.drawing_frame.pack()
+        self.drawing_frame.pack(expand=True)
 
     def create_obj_name_label(self, _frame):
         self.obj_name = Label(
@@ -68,7 +68,7 @@ class MainArea:
             font = ("Arial", 18),
             fg = "#013243"
         )
-        self.obj_name.pack()
+        self.obj_name.pack(expand=True)
 
     def __init__(self, _root):
         self.root = Frame(_root, width=640, height=480, relief='sunken', borderwidth=2)
@@ -87,7 +87,7 @@ class MainArea:
         return self.image1
 
     def set_text_label_obj_name(self, _text):
-        self.obj_name.config(text=_text)
+        self.obj_name.config(text= "Draw a/an " + _text)
 
 class Game:
     def create_button(self, frame, name_btn, cmd_btn):
@@ -98,13 +98,16 @@ class Game:
         width = 8,
         bg = "#24252a",
         fg = "#f03434")
-        btn.pack(padx = 5, pady = 5)
+        btn.pack(padx = 5, pady = 5, expand=True)
 
-    def draw_live(self, frame):
+    def draw_lives(self, _frame):
         image = Image.open('Image/live.png')
-        img = ImageTk.PhotoImage(image.resize((48, 48))) 
-        label = Label(frame, image=img)
-        label.pack(side=LEFT)
+        self.img = ImageTk.PhotoImage(image.resize((20, 20))) 
+        self.lives = []
+        num_lives = 3
+        for i in range(num_lives):
+            self.lives.append(Label(_frame, image=self.img))
+            self.lives[i].pack(side=LEFT)
 
     def random_obj_name(self):
         num = random.randrange(0, len(Classes), 1)
@@ -113,12 +116,29 @@ class Game:
 
     def __init__(self):
         self.root = Tk()
+        self.root.title("Quick-Draw")
+
         self.mainarea = MainArea(self.root)
         self.sidebar = Frame(self.root, width=200, height=480, relief='sunken', borderwidth=2)
         self.sidebar.pack(expand=True, fill='both', side='right', anchor='nw')
+        
+        self.score = 0
+        self.score_label = Label(
+            self.sidebar, 
+            text = "Score: 0",
+            font = ("Arial", 18),
+        )
+        self.score_label.pack(expand = True)
+
+        self.lives_frame = Frame(self.sidebar)
+        self.lives_frame.pack(expand=True)
+        self.draw_lives(self.lives_frame)
+
         self.btn_submit = self.create_button(self.sidebar, "Submit", self.submit)
         self.btn_clear = self.create_button(self.sidebar, "Clear", self.clear)
+        
         self.random_obj_name()
+        
         self.detector = DetectDraw()
         self.root.mainloop()
 
@@ -129,20 +149,35 @@ class Game:
         result = self.detector.predict()
         self.check_ans(result)
 
+    def update_score(self):
+        self.score += 1
+        self.score_label.config(text="Score: {}".format(self.score))
+
+    def kill_lives(self):
+        if len(self.lives) == 0:
+            print("You loose!")
+            return 
+        l = len(self.lives)
+        self.lives[l-1].destroy()
+        self.lives.pop(l-1)
+        return
+
     def check_ans(self, res):
         if res == None:
             messagebox.showinfo("Failed!", "I don't know what you drew. Try again")
+            self.kill_lives()
             return 
 
         ans = res[0]
         if ans == self.obj_name:
             messagebox.showinfo("Sucess", "Congrats! You are an artist!")
             self.random_obj_name()
+            self.update_score()
             self.clear()
         else:
             messagebox.showinfo("Failed", "Wrong! You draw a {}. Try again.".format(ans))
+            self.kill_lives()
                 
-
     def clear(self):
         self.mainarea.get_canvas().delete('all')
         self.mainarea.create_draw()

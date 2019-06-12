@@ -1,4 +1,4 @@
-from flask import *
+from flask import Flask
 import os
 import sys
 import darknet as dn
@@ -8,15 +8,13 @@ import cv2
 from io import BytesIO
 import base64
 
-app = Flask(__name__)
-
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 options = {
         'model': 'cfg/yolov3.cfg',
         'load': 'weights/yolov3.weights',
         'data' : 'cfg/coco.data',
-        'threshold': 0.2,
+        'threshold': 0.4,
 }
 
 class YOLO:
@@ -72,6 +70,9 @@ def draw_bouding_box(pred, img):
         drawPred(label, score, UL_x, UL_y, LR_x, LR_y, img)
     return detected_obj
 
+app = Flask(__name__)
+yolo = None  
+
 @app.route('/')
 def index():
     return render_template("upload.html")
@@ -106,6 +107,5 @@ def upload():
     return render_template("complete.html", pred= detected_obj_name)
 
 if __name__ == "__main__":
-    global yolo 
     yolo = YOLO()
-    app.run(port = 4000, debug = True)
+    app.run(port = 5000)

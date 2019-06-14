@@ -1,8 +1,8 @@
-from flask import Flask
+from flask import Flask, render_template, request
 import os
 import sys
 import darknet as dn
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt     
 import matplotlib.image as img 
 import cv2
 from io import BytesIO
@@ -68,9 +68,12 @@ def draw_bouding_box(pred, img):
         LR_y = int(center_y - height/2)
 
         drawPred(label, score, UL_x, UL_y, LR_x, LR_y, img)
+     # Save image to static/
+    plt.savefig('static/predictions.png')
     return detected_obj
 
 app = Flask(__name__)
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 1
 yolo = None  
 
 @app.route('/')
@@ -95,17 +98,17 @@ def upload():
     print('RESULT\n', pred)
 
     detected_obj_name = draw_bouding_box(pred, img)
-
-    # Save image to static/
-    plt.savefig('static/predictions.png')
-    figfile = BytesIO()
-    plt.savefig(figfile, format='png')
-    figfile.seek(0)
-    figdata_png = base64.b64encode(figfile.getvalue())
-    result = figdata_png
     
     return render_template("complete.html", pred= detected_obj_name)
 
+# No caching at all for API endpoints.
+@app.after_request
+def add_header(response):
+    # response.cache_control.no_store = True
+    if 'Cache-Control' not in response.headers:
+        response.headers['Cache-Control'] = 'no-store'
+    return response
+
 if __name__ == "__main__":
     yolo = YOLO()
-    app.run(port = 5000)
+    app.run(port = 8080)    
